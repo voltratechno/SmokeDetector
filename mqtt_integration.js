@@ -8,7 +8,7 @@
 const MQTT_CONFIG = {
     // EMQX Public Broker
     host: 'broker.emqx.io',
-    port: 8083,  // WebSocket port
+    port: 8084,  // WebSocket Secure (WSS) port untuk HTTPS
     path: '/mqtt',
 
     // Topik MQTT (sesuai kode ESP32)
@@ -27,7 +27,7 @@ const MQTT_CONFIG = {
     options: {
         keepAliveInterval: 30,
         timeout: 10,
-        useSSL: false,
+        useSSL: true,  // Gunakan SSL/WSS untuk HTTPS
         cleanSession: true,
         reconnect: true,
         reconnectInterval: 5000
