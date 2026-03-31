@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIstem Pendeteksi Kebakaran</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- MQTT Library (Paho) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+</head>
+<body class="light-mode">
+    <!-- Background Animated Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-badge">
+                    <div class="badge-ring"></div>
+                    <div class="badge-image">
+                        <img src="kebakaran hutan.jpg" alt="Kebakaran Hutan" class="logo-image">
+                    </div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Pendeteksi Kebakaran Hutan</h1>
+                    <p class="logo-subtitle">Sistem Monitoring IoT Real-time</p>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div class="simulation-status" id="mqttStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">MQTT Terputus</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Alert Banner -->
+        <div class="alert-banner" id="alertBanner">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <div class="alert-title">Peringatan!</div>
+                <div class="alert-message" id="alertMessage">Tidak ada peringatan aktif</div>
+            </div>
+            <button class="alert-dismiss" id="alertDismiss">✕</button>
+        </div>
+
+        <!-- Quick Stats Cards -->
+        <section class="stats-grid">
+
+            <!-- Gas Sensor Card -->
+            <div class="stat-card gas-card">
+                <div class="visual-indicator gas-visual">
+                    <div class="gas-emoji">💨</div>
+                    <div class="gas-particles">
+                        <span class="gas-particle"></span>
+                        <span class="gas-particle"></span>
+                        <span class="gas-particle"></span>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Smoke Detector</div>
+                    <div class="stat-value">
+                        <span id="gasValue">0</span>
+                        <span class="stat-unit">ppm</span>
+                    </div>
+                    <div class="stat-indicator" id="gasIndicator">
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperature Sensor Card -->
+            <div class="stat-card temp-card">
+                <div class="visual-indicator temp-visual">
+                    <div class="thermometer">
+                        <div class="thermometer-bulb"></div>
+                        <div class="thermometer-stem">
+                            <div class="thermometer-fill" id="thermometerFill"></div>
+                        </div>
+                        <div class="thermometer-marks">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Temperature</div>
+                    <div class="stat-value">
+                        <span id="tempValue">0</span>
+                        <span class="stat-unit">°C</span>
+                    </div>
+                    <div class="stat-trend" id="tempTrend">
+                        <span class="trend-icon">→</span>
+                        <span class="trend-text">Stabil</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soil Moisture Sensor Card -->
+            <div class="stat-card soil-card">
+                <div class="visual-indicator soil-visual">
+                    <div class="soil-emoji">🌱</div>
+                    <div class="soil-particles">
+                        <span class="soil-particle"></span>
+                        <span class="soil-particle"></span>
+                        <span class="soil-particle"></span>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Kelembapan Tanah</div>
+                    <div class="stat-value">
+                        <span id="soilMoistureValue">0</span>
+                        <span class="stat-unit">%</span>
+                    </div>
+                    <div class="stat-indicator" id="soilMoistureIndicator">
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                        <span class="indicator-bar"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section - 3 Separate Charts -->
+        <section class="charts-section">
+            <div class="charts-grid">
+                <!-- Gas Chart Card -->
+                <div class="chart-card gas-chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon gas-icon">
+                                <span class="emoji-icon">💨</span>
+                            </div>
+                            <h3>Smoke Detection</h3>
+                        </div>
+                        <div class="chart-value" id="gasChartValue">0 ppm</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="gasChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Temperature Chart Card -->
+                <div class="chart-card temp-chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon temp-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                                </svg>
+                            </div>
+                            <h3>Temperature </h3>
+                        </div>
+                        <div class="chart-value" id="tempChartValue">0°C</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Soil Moisture Chart Card -->
+                <div class="chart-card soil-chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="chart-icon soil-icon">
+                                <span class="emoji-icon">🌱</span>
+                            </div>
+                            <h3>Kelembapan Tanah</h3>
+                        </div>
+                        <div class="chart-value" id="soilMoistureChartValue">0%</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="soilMoistureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Panel -->
+        <section class="settings-panel">
+            <h2>⚙️ Pengaturan</h2>
+
+            <!-- MQTT Connection -->
+            <h3 style="margin-top: 0; margin-bottom: 15px;">📡 Koneksi MQTT</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Hubungkan ke ESP32 untuk data sensor real-time. Pastikan ESP32 online dan terhubung ke WiFi.
+                    </p>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button class="btn btn-success" id="connectMQTTBtn">Hubungkan MQTT</button>
+            </div>
+
+        </section>
+
+        <!-- Log Section -->
+        <section class="log-section">
+            <div class="log-header">
+                <h2>⚠️ Log Peringatan Asap</h2>
+                <button class="btn-icon" id="clearLog" title="Bersihkan Log">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="log-content" id="logContent">
+                <div class="log-item log-info">
+                    <span class="log-time">--:--:--</span>
+                    <span class="log-message">Sistem siap. Menunggu data sensor...</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p> Sistem Pendeteksi Kebakaran Hutan Berbasis Internet of Things</p>
+    </footer>
+
+    <script src="mqtt_integration.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
